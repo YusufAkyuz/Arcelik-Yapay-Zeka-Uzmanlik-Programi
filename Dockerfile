@@ -1,19 +1,16 @@
-# BAse image tanımı
-FROM python:3.10-slim
+# AWS Lambda için optimize edilmiş Python 3.10 base imajı
+FROM public.ecr.aws/lambda/python:3.10
 
-WORKDIR /app
+# Bağımlılıkları kopyala
+COPY requirements.txt ${LAMBDA_TASK_ROOT}
 
-# Gereken dosyaları kopyala
-COPY scripts/ scripts/
-COPY config/ config/
-COPY data/ data/
-COPY requirements.txt .
-
-# Python bağımlılıklarını yükle
+# Python kütüphanelerini yükle
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Çıktı klasörünü outpt olarak oluşturur
-RUN mkdir -p output
+# Uygulama kodlarını ve konfigürasyon dosyalarını kopyala
+COPY app/ ${LAMBDA_TASK_ROOT}/app/
+COPY config/ ${LAMBDA_TASK_ROOT}/config/
+COPY app.py ${LAMBDA_TASK_ROOT}
 
-# Main script dosyasını çalıştırır
-CMD ["python", "scripts/test.py"]
+# Lambda'nın tetikleneceği giriş noktasını (Handler) belirle
+CMD [ "app.handler" ]

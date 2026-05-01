@@ -1,9 +1,13 @@
 import pandas as pd
 import re
-from config_loader import load_config
-from transformer import process_log
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from app.core.config_loader import load_config
+from app.core.transformer import process_log
 import argparse
-from logger import setup_logger
+from app.core.logger import setup_logger
 from datetime import datetime, timezone
 
 

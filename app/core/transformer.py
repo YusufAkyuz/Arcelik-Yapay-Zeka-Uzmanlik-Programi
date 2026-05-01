@@ -1,6 +1,6 @@
 import pandas as pd
-from mappers import *
-from logger import setup_logger
+from .mappers import *
+from .logger import setup_logger
 
 logger = setup_logger()
 
