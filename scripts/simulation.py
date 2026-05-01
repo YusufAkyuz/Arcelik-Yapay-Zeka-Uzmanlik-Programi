@@ -44,15 +44,13 @@ def main():
 
     print(f"Simülasyon Başlıyor...\nDosya: {args.file}\nBucket: {args.bucket}\nAralık: {args.interval} saniye")
     
-    endpoint = args.endpoint if args.endpoint else None
-
     counter = 1
     while True:
         # Gerçek dünyayı simüle etmek için dosyayı farklı isimlerle yüklüyoruz
         timestamp = int(time.time())
         object_name = f"logs/raw_log_{timestamp}_{counter}.txt"
         
-        upload_to_s3(args.file, args.bucket, object_name, endpoint)
+        upload_to_s3(args.file, args.bucket, object_name)
         
         counter += 1
         print(f"Bekleniyor: {args.interval} saniye...\n")
