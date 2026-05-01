@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: mercek_user
+      POSTGRES_PASSWORD: mercek_password
+      POSTGRES_DB: mercek_db
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  api:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    # AWS Lambda base imajını yerelde test edebilmek için Flask server olarak çalıştırıyoruz
+    entrypoint: ["python", "-m", "flask", "run", "--host=0.0.0.0", "--port=5000"]
+    ports:
+      - "5000:5000"
+    environment:
+      - DATABASE_URL=postgresql://mercek_user:mercek_password@db:5432/mercek_db
+      - REDIS_URL=redis://redis:6379/0
+      - FLASK_APP=app.py
+      - FLASK_DEBUG=1
+    depends_on:
+      - db
+      - redis
