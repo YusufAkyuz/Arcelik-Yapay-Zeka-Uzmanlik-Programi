@@ -11,3 +11,6 @@ pyyaml==6.0.1
 requests==2.31.0
 Flask==3.0.0
 serverless-wsgi==3.0.2
+Flask-SQLAlchemy==3.1.1
+psycopg2-binary==2.9.9
+redis==5.0.3
