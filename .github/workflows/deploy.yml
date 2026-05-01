@@ -6,7 +6,7 @@ on:
       - main
 
 env:
-  AWS_REGION: eu-central-1
+  AWS_REGION: eu-north-1
   ECR_REPOSITORY: mercek-analytics-repo
   LAMBDA_FUNCTION_NAME: mercek-processor-function
 
