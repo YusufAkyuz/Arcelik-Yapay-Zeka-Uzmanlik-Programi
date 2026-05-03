@@ -1,7 +1,7 @@
 import json
 import re
 from datetime import datetime, timezone
-from app.extensions import db, redis_client
+from app.extensions import db, get_redis_client
 from app.models.log_record import ApplianceLog
 from app.core.config_loader import load_config
 from app.core.transformer import process_log
@@ -18,6 +18,7 @@ class LogService:
         """
         Config dosyasını önce Redis'ten okumayı dener, yoksa diskten okur ve Redis'e yazar.
         """
+        redis_client = get_redis_client()
         if redis_client:
             try:
                 cached_config = redis_client.get(CONFIG_REDIS_KEY)
@@ -29,6 +30,7 @@ class LogService:
         # Redis'te yoksa diskten al
         config = load_config(DEFAULT_CONFIG_PATH)
         
+        redis_client = get_redis_client()
         if config and redis_client:
             try:
                 # 24 saat önbellekte tut
