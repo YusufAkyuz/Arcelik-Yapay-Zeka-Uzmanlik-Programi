@@ -8,11 +8,8 @@ from dotenv import load_dotenv
 # Proje kök dizinindeki .env dosyasını yükle
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'))
 
-def upload_to_s3(file_name, bucket, object_name=None):
-    """Upload a file to an S3 bucket"""
-    if object_name is None:
-        object_name = os.path.basename(file_name)
-
+def upload_line_to_s3(line_content, bucket, object_name):
+    """Upload a single line to an S3 bucket from memory"""
     s3_client = boto3.client(
         's3',
         aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
@@ -21,8 +18,8 @@ def upload_to_s3(file_name, bucket, object_name=None):
     )
 
     try:
-        s3_client.upload_file(file_name, bucket, object_name)
-        print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Başarıyla yüklendi: {object_name} -> s3://{bucket}/{object_name}")
+        s3_client.put_object(Bucket=bucket, Key=object_name, Body=line_content.encode('utf-8'))
+        print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Başarıyla yüklendi: {object_name} (1 satır) -> s3://{bucket}/{object_name}")
     except NoCredentialsError:
         print("AWS yetki bilgileri bulunamadı. Lütfen .env dosyasını kontrol edin.")
     except Exception as e:
@@ -34,7 +31,6 @@ def main():
     parser.add_argument('--file', type=str, default=os.environ.get('SIMULATION_FILE', 'data/1.txt'), help='Path to raw data file')
     parser.add_argument('--bucket', type=str, default=os.environ.get('S3_BUCKET_NAME', 'local-bucket'), help='AWS S3 Bucket Name')
     parser.add_argument('--interval', type=int, default=int(os.environ.get('SIMULATION_INTERVAL', 60)), help='Upload interval in seconds')
-    parser.add_argument('--endpoint', type=str, default='', help='Custom S3 Endpoint (e.g. http://localhost:4566 for LocalStack)')
     
     args = parser.parse_args()
 
@@ -42,19 +38,27 @@ def main():
         print(f"Hata: Dosya bulunamadı - {args.file}")
         return
 
-    print(f"Simülasyon Başlıyor...\nDosya: {args.file}\nBucket: {args.bucket}\nAralık: {args.interval} saniye")
+    print(f"Simülasyon Başlıyor...\nDosya: {args.file} (Satır Satır İşlenecek)\nBucket: {args.bucket}\nAralık: {args.interval} saniye")
     
+    # Dosyayı bir kere oku
+    with open(args.file, 'r', encoding='utf-8') as f:
+        lines = f.readlines()
+
     counter = 1
+    # Dosya bitince başa sarması için sonsuz döngü (opsiyonel)
     while True:
-        # Gerçek dünyayı simüle etmek için dosyayı farklı isimlerle yüklüyoruz
-        timestamp = int(time.time())
-        object_name = f"logs/raw_log_{timestamp}_{counter}.txt"
-        
-        upload_to_s3(args.file, args.bucket, object_name)
-        
-        counter += 1
-        print(f"Bekleniyor: {args.interval} saniye...\n")
-        time.sleep(args.interval)
+        for line in lines:
+            if not line.strip():
+                continue
+                
+            timestamp = int(time.time())
+            object_name = f"logs/raw_log_{timestamp}_{counter}.txt"
+            
+            upload_line_to_s3(line.strip(), args.bucket, object_name)
+            
+            counter += 1
+            print(f"Bekleniyor: {args.interval} saniye...\n")
+            time.sleep(args.interval)
 
 if __name__ == "__main__":
     main()
