@@ -71,6 +71,7 @@ class LogService:
 
         lines = file_content.strip().split('\n')
         saved_count = 0
+        invalid_ts_count = 0
 
         for line in lines:
             if not line.strip():
@@ -88,7 +89,9 @@ class LogService:
                 ts = int(parts[3]) // 1000
                 dt = datetime.fromtimestamp(ts, tz=timezone.utc)
             except Exception as e:
-                logger.warning(f"Invalid timestamp detected: {parts[3]}")
+                invalid_ts_count += 1
+                if invalid_ts_count == 1:
+                    logger.warning(f"Invalid timestamp detected: {parts[3]} (Diğer hatalı olanlar da olabilir, hepsi atlanacak)")
                 continue
 
             log_arr, conn_state = LogService.extract_log_data(parts[4:])
@@ -110,5 +113,7 @@ class LogService:
             saved_count += 1
 
         db.session.commit()
+        if invalid_ts_count > 0:
+            logger.warning(f"Toplam {invalid_ts_count} satırda geçersiz timestamp bulundu ve atlandı.")
         logger.info(f"{saved_count} kayıt başarıyla veritabanına işlendi.")
         return saved_count
