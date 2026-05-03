@@ -33,8 +33,8 @@ def process_log(log_arr, config):
     for key, meta in config.items():
         info = meta["modelInfo"]
         indexes = info["index"]
-        if any(i >= len(log_arr) for i in indexes):  # Yeni eklenen kontrol
-            logger.warning(f"Invalid index for {key}. Skipping...")
+        if any(i >= len(log_arr) for i in indexes):
+            # logger.warning(f"Invalid index for {key}. Skipping...") # Timeout'u engellemek için kapatıldı
             continue
         mapper = meta["mapperFunc"]
         values = [log_arr[i] for i in indexes]
