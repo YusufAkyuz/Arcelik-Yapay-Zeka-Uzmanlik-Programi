@@ -12,10 +12,9 @@ def create_app():
     # SQLAlchemy eklentisini bağla
     db.init_app(app)
 
-    # Modelleri içeri aktar ve veritabanı tablolarını oluştur
-    with app.app_context():
-        from app.models import log_record
-        db.create_all()
+    # NOT: db.create_all() buradan kaldırıldı.
+    # Lambda init aşamasında ağ bağlantısı olmadığı için timeout'a sebep oluyordu.
+    # Tablolar artık handler ilk çalıştığında oluşturulacak.
 
     # Blueprint'leri kaydedelim
     from app.api.routes import api_bp
