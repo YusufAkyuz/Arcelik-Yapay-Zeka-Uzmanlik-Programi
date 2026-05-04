@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { UploadCloud, FileText, CheckCircle, AlertCircle } from "lucide-react";
 
 export function Ingest() {
   const [file, setFile] = useState<File | null>(null);
@@ -56,13 +57,28 @@ export function Ingest() {
         </div>
       </header>
 
-      <section className="panel" style={{ maxWidth: "600px", padding: "24px" }}>
-        <div style={{ marginBottom: "20px" }}>
-          <label style={{ display: "block", marginBottom: "12px", fontWeight: "bold", fontSize: "14px", color: "#40505a" }}>
+      <section className="panel" style={{ maxWidth: "600px", padding: "32px" }}>
+        <div style={{ marginBottom: "24px" }}>
+          <label style={{ display: "block", marginBottom: "16px", fontWeight: "600", fontSize: "15px", color: "var(--text-primary)" }}>
             Source Log File (.txt)
           </label>
           
-          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+          <div 
+            style={{ 
+              border: "2px dashed var(--table-border)", 
+              borderRadius: "12px", 
+              padding: "32px", 
+              textAlign: "center",
+              background: "rgba(248, 250, 252, 0.5)",
+              transition: "all 0.2s ease"
+            }}
+          >
+            <div style={{ marginBottom: "16px", color: "var(--primary-accent)", display: "flex", justifyContent: "center" }}>
+              <FileText size={48} strokeWidth={1.5} opacity={0.8} />
+            </div>
+            <p style={{ margin: "0 0 16px 0", color: "var(--text-secondary)", fontSize: "14px" }}>
+              {file ? <strong>{file.name}</strong> : "Select a telemetry log file to upload"}
+            </p>
             <input 
               id="hidden-file-input"
               type="file" 
@@ -73,18 +89,14 @@ export function Ingest() {
             <button 
               onClick={() => document.getElementById('hidden-file-input')?.click()}
               style={{ 
-                background: "#f5f7f8", 
-                color: "#172026", 
-                border: "1px solid #cfd8dd",
-                minHeight: "38px",
-                whiteSpace: "nowrap"
+                background: "white", 
+                color: "var(--text-primary)", 
+                border: "1px solid var(--table-border)",
+                boxShadow: "0 1px 2px rgba(0,0,0,0.05)"
               }}
             >
               Browse Files...
             </button>
-            <span style={{ fontSize: "13px", color: "#64717b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {file ? file.name : "No file selected"}
-            </span>
           </div>
         </div>
 
@@ -93,24 +105,27 @@ export function Ingest() {
           disabled={loading || !file}
           style={{ 
             width: "100%", 
-            background: loading ? "#aebbc2" : "#2f6f73", 
-            color: "white",
-            fontWeight: "bold",
-            marginTop: "10px"
+            marginTop: "10px",
+            fontSize: "15px",
+            padding: "12px",
+            display: "flex",
+            justifyContent: "center",
+            gap: "8px"
           }}
         >
+          <UploadCloud size={20} />
           {loading ? "Processing..." : "Start Ingestion"}
         </button>
 
         {error && (
-          <div className="state error" style={{ marginTop: "16px", padding: "12px", background: "#fde7df", borderRadius: "8px" }}>
-            {error}
+          <div className="state error" style={{ marginTop: "24px", display: "flex", alignItems: "center", gap: "10px", justifyContent: "center" }}>
+            <AlertCircle size={20} /> {error}
           </div>
         )}
 
         {result && (
-          <div className="state" style={{ marginTop: "16px", padding: "12px", background: "#ddf7e7", borderRadius: "8px", color: "#166534" }}>
-            <strong>Success!</strong> {result.records_saved} records saved.
+          <div className="state" style={{ marginTop: "24px", color: "var(--success-text)", display: "flex", alignItems: "center", gap: "10px", justifyContent: "center" }}>
+            <CheckCircle size={20} /> <strong>Success!</strong> {result.records_saved} records saved.
           </div>
         )}
       </section>

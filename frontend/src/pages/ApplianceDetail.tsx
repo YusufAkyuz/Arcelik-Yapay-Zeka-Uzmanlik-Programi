@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useLocation } from "react-router-dom";
+import { ArrowLeft, MapPin, Clock, Activity, Thermometer, Wind, RefreshCw } from "lucide-react";
 import { LogTable } from "../ui/LogTable";
 
 interface ApplianceDetailData {
@@ -47,100 +48,121 @@ export function ApplianceDetail() {
       });
   }, [id]);
 
-  if (loading) return <div className="card shadow">Loading device details...</div>;
-  if (error || !detail) return <div className="card shadow" style={{ borderLeft: "4px solid red" }}>Error: {error || "Device not found"}</div>;
+  if (loading) return <div className="state">Loading device details...</div>;
+  if (error || !detail) return <div className="state error">Error: {error || "Device not found"}</div>;
 
   const latest = detail.latest_log || {};
   const stats = latest.parsed_data || {};
 
   return (
-    <div className="appliance-detail-container" style={{ padding: "1rem" }}>
-      <div style={{ marginBottom: "1.5rem" }}>
-        <Link to={backPath} style={{ color: "var(--primary)", textDecoration: "none", fontWeight: "bold" }}>← {backLabel}</Link>
-      </div>
+    <div className="page">
+      <header className="page-header">
+        <div>
+          <Link 
+            to={backPath} 
+            style={{ 
+              display: "inline-flex", 
+              alignItems: "center", 
+              gap: "6px",
+              color: "var(--primary-accent)", 
+              textDecoration: "none", 
+              fontWeight: "600",
+              fontSize: "14px",
+              marginBottom: "16px"
+            }}
+          >
+            <ArrowLeft size={16} /> {backLabel}
+          </Link>
+          <h1>Appliance Details</h1>
+          <p>Detailed telemetry and status for device {detail.appliance_id}</p>
+        </div>
+      </header>
 
       {/* Hero Header Card - Modern & Light Design */}
-      <div className="card shadow" style={{ 
-        marginBottom: "2rem", 
-        background: "white", 
-        borderLeft: "6px solid var(--primary)",
-        padding: "1.5rem 2rem"
-      }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+      <div className="panel" style={{ padding: "24px", position: "relative" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "20px" }}>
           <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
-              <h1 style={{ margin: 0, color: "#1e293b", fontSize: "1.6rem", letterSpacing: "-0.5px" }}>{detail.appliance_id}</h1>
-              <span style={{ 
-                padding: "4px 12px", 
-                borderRadius: "20px", 
-                fontSize: "0.7rem",
-                background: latest.conn_state === 'online' ? '#dcfce7' : '#fee2e2',
-                color: latest.conn_state === 'online' ? '#166534' : '#991b1b',
-                fontWeight: "bold",
-                textTransform: "uppercase"
-              }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
+              <h2 style={{ fontSize: "24px", fontWeight: "700", color: "var(--text-primary)" }}>{detail.appliance_id}</h2>
+              <span className={`badge ${latest.conn_state === 'online' ? 'online' : 'offline'}`}>
                 {latest.conn_state || "Unknown"}
               </span>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "15px", color: "#64748b", fontSize: "0.85rem" }}>
-              <span><strong>Last Contact:</strong> {latest.timestamp ? new Date(latest.timestamp).toLocaleString() : "N/A"}</span>
-              <span style={{ color: "#cbd5e1" }}>|</span>
-              <span><strong>Location:</strong> {latest.latitude?.toFixed(4)}, {latest.longitude?.toFixed(4)}</span>
+            <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "20px", color: "var(--text-secondary)", fontSize: "14px", fontWeight: "500" }}>
+              <span style={{ display: "flex", alignItems: "center", gap: "6px" }}><Clock size={16} /> {latest.timestamp ? new Date(latest.timestamp).toLocaleString() : "N/A"}</span>
+              <span style={{ display: "flex", alignItems: "center", gap: "6px" }}><MapPin size={16} /> {latest.latitude?.toFixed(4)}, {latest.longitude?.toFixed(4)}</span>
             </div>
           </div>
           <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: "2rem", fontWeight: "800", color: "var(--primary)", lineHeight: "1" }}>{detail.log_count}</div>
-            <div style={{ fontSize: "0.65rem", color: "#94a3b8", fontWeight: "bold", letterSpacing: "1.5px", marginTop: "4px" }}>TOTAL DATA POINTS</div>
+            <div style={{ fontSize: "36px", fontWeight: "800", color: "var(--primary-accent)", lineHeight: "1" }}>{detail.log_count}</div>
+            <div style={{ fontSize: "12px", color: "var(--text-secondary)", fontWeight: "600", letterSpacing: "0.05em", marginTop: "8px", textTransform: "uppercase" }}>Total Data Points</div>
           </div>
         </div>
       </div>
 
       {/* Stats Grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "1.5rem" }}>
-        <div className="card shadow">
-          <h3 style={{ marginBottom: "1.2rem", borderBottom: "1px solid #eee", paddingBottom: "0.5rem" }}>Technical Snapshot</h3>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.2rem" }}>
-            <div>
-              <label style={{ fontSize: "0.7rem", color: "#64748b", display: "block" }}>CYCLE COUNT</label>
-              <span style={{ fontSize: "1.1rem", fontWeight: "bold" }}>{stats.CYCLE_COUNT ?? "N/A"}</span>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "24px" }}>
+        <div className="panel">
+          <div className="panel-header">
+            <h2>Technical Snapshot</h2>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", padding: "24px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <label style={{ fontSize: "12px", color: "var(--text-secondary)", fontWeight: "600", textTransform: "uppercase", display: "flex", alignItems: "center", gap: "6px" }}>
+                <RefreshCw size={14} /> Cycle Count
+              </label>
+              <span style={{ fontSize: "18px", fontWeight: "700", color: "var(--text-primary)" }}>{stats.CYCLE_COUNT ?? "N/A"}</span>
             </div>
-            <div>
-              <label style={{ fontSize: "0.7rem", color: "#64748b", display: "block" }}>PROGRAM</label>
-              <span style={{ fontSize: "1rem", fontWeight: "bold" }}>{stats.BASE_PROGRAM || "N/A"}</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <label style={{ fontSize: "12px", color: "var(--text-secondary)", fontWeight: "600", textTransform: "uppercase", display: "flex", alignItems: "center", gap: "6px" }}>
+                <Activity size={14} /> Program
+              </label>
+              <span style={{ fontSize: "18px", fontWeight: "700", color: "var(--text-primary)" }}>{stats.BASE_PROGRAM || "N/A"}</span>
             </div>
-            <div>
-              <label style={{ fontSize: "0.7rem", color: "#64748b", display: "block" }}>TEMPERATURE</label>
-              <span style={{ fontSize: "1.1rem", fontWeight: "bold" }}>{stats.TEMP ?? 0}°C</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <label style={{ fontSize: "12px", color: "var(--text-secondary)", fontWeight: "600", textTransform: "uppercase", display: "flex", alignItems: "center", gap: "6px" }}>
+                <Thermometer size={14} /> Temperature
+              </label>
+              <span style={{ fontSize: "18px", fontWeight: "700", color: "var(--text-primary)" }}>{stats.TEMP ?? 0}°C</span>
             </div>
-            <div>
-              <label style={{ fontSize: "0.7rem", color: "#64748b", display: "block" }}>SPIN SPEED</label>
-              <span style={{ fontSize: "1.1rem", fontWeight: "bold" }}>{stats.SPIN ?? 0} RPM</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <label style={{ fontSize: "12px", color: "var(--text-secondary)", fontWeight: "600", textTransform: "uppercase", display: "flex", alignItems: "center", gap: "6px" }}>
+                <Wind size={14} /> Spin Speed
+              </label>
+              <span style={{ fontSize: "18px", fontWeight: "700", color: "var(--text-primary)" }}>{stats.SPIN ?? 0} RPM</span>
             </div>
           </div>
         </div>
 
-        <div className="card shadow">
-          <h3 style={{ marginBottom: "1.2rem", borderBottom: "1px solid #eee", paddingBottom: "0.5rem" }}>Location & Network</h3>
-          <div style={{ lineHeight: "2" }}>
-            <p><strong>Latitude:</strong> {latest.latitude || "N/A"}</p>
-            <p><strong>Longitude:</strong> {latest.longitude || "N/A"}</p>
-            <p><strong>Status:</strong> <span style={{ 
-              padding: "4px 8px", 
-              borderRadius: "4px", 
-              fontSize: "0.8rem",
-              background: latest.conn_state === 'online' ? '#dcfce7' : '#fee2e2',
-              color: latest.conn_state === 'online' ? '#166534' : '#991b1b',
-              fontWeight: "bold"
-            }}>
-              {latest.conn_state?.toUpperCase() || "UNKNOWN"}
-            </span></p>
+        <div className="panel">
+          <div className="panel-header">
+            <h2>Location & Network</h2>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px", padding: "24px", color: "var(--text-primary)", fontWeight: "500" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid var(--table-border)", paddingBottom: "12px" }}>
+              <span style={{ color: "var(--text-secondary)" }}>Latitude</span>
+              <span>{latest.latitude || "N/A"}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid var(--table-border)", paddingBottom: "12px" }}>
+              <span style={{ color: "var(--text-secondary)" }}>Longitude</span>
+              <span>{latest.longitude || "N/A"}</span>
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ color: "var(--text-secondary)" }}>Status</span>
+              <span className={`badge ${latest.conn_state === 'online' ? 'online' : 'offline'}`}>
+                {latest.conn_state?.toUpperCase() || "UNKNOWN"}
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
       {/* History Table */}
-      <div className="card shadow" style={{ marginTop: "2rem" }}>
-        <h3 style={{ marginBottom: "1rem" }}>Recent Activity</h3>
+      <div className="panel">
+        <div className="panel-header">
+          <h2>Recent Activity</h2>
+          <span>Latest {logs.length} events</span>
+        </div>
         <div style={{ overflowX: "auto" }}>
           <LogTable logs={logs} />
         </div>

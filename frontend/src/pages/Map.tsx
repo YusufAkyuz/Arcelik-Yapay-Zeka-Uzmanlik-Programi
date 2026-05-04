@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { Link } from "react-router-dom";
+import { MapPin } from "lucide-react";
 
 // Leaflet default icon fix (React ile bazen ikonlar gözükmeyebiliyor)
 import markerIcon from "leaflet/dist/images/marker-icon.png";
@@ -45,13 +46,15 @@ export function MapView() {
       });
   }, []);
 
-  if (loading) return <div className="card">Loading Map...</div>;
+  if (loading) return <div className="state">Loading Map...</div>;
 
   return (
-    <div className="card" style={{ height: "calc(100vh - 100px)", padding: 0, overflow: "hidden" }}>
-      <div style={{ padding: "1rem", borderBottom: "1px solid var(--border)" }}>
-        <h2>Device Locations</h2>
-        <p>{appliances.length} devices found with location data.</p>
+    <div className="panel" style={{ height: "calc(100vh - 120px)", padding: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+      <div style={{ padding: "24px", borderBottom: "1px solid var(--table-border)", background: "rgba(255,255,255,0.4)" }}>
+        <h2 style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "20px" }}>
+          <MapPin size={24} color="var(--primary-accent)" /> Device Locations
+        </h2>
+        <p style={{ marginTop: "6px", color: "var(--text-secondary)" }}>{appliances.length} devices found with location data.</p>
       </div>
       
       <MapContainer 
@@ -75,11 +78,17 @@ export function MapView() {
                   Total Logs: {app.log_count} <br />
                   Last Seen: {new Date(app.last_seen).toLocaleString()}
                 </small>
-                <hr style={{ margin: "8px 0", border: "0", borderTop: "1px solid #eee" }} />
+                <hr style={{ margin: "10px 0", border: "0", borderTop: "1px solid #e2e8f0" }} />
                 <Link 
                   to={`/device-details/${app.appliance_id}`} 
                   state={{ from: 'map' }}
-                  style={{ color: "var(--primary)", fontWeight: "bold", textDecoration: "none" }}
+                  style={{ 
+                    display: "inline-flex",
+                    color: "var(--primary-accent)", 
+                    fontWeight: "600", 
+                    textDecoration: "none",
+                    fontSize: "13px"
+                  }}
                 >
                   View Details →
                 </Link>

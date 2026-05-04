@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getAppliances } from "../api/client";
 import { formatDateTime } from "../ui/format";
 import { Link } from "react-router-dom";
+import { ChevronRight } from "lucide-react";
 
 export function Appliances() {
   const appliances = useQuery({
@@ -45,16 +46,22 @@ export function Appliances() {
                       to={`/device-details/${item.appliance_id}`}
                       state={{ from: 'appliances' }}
                       style={{ 
-                        color: "var(--primary)", 
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        color: "var(--primary-accent)", 
                         textDecoration: "none", 
-                        fontWeight: "bold",
-                        fontSize: "0.85rem",
-                        padding: "4px 8px",
-                        border: "1px solid var(--primary)",
-                        borderRadius: "4px"
+                        fontWeight: "600",
+                        fontSize: "13px",
+                        padding: "6px 12px",
+                        background: "rgba(99, 102, 241, 0.1)",
+                        borderRadius: "6px",
+                        transition: "all 0.2s ease"
                       }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = "rgba(99, 102, 241, 0.15)"}
+                      onMouseLeave={(e) => e.currentTarget.style.background = "rgba(99, 102, 241, 0.1)"}
                     >
-                      View Details →
+                      Details <ChevronRight size={14} />
                     </Link>
                   </td>
                 </tr>

@@ -1,4 +1,5 @@
 import { NavLink, Route, Routes } from "react-router-dom";
+import { LayoutDashboard, Map as MapIcon, ScrollText, Cpu, UploadCloud } from "lucide-react";
 import { Dashboard } from "./pages/Dashboard";
 import { Logs } from "./pages/Logs";
 import { Appliances } from "./pages/Appliances";
@@ -19,11 +20,26 @@ export default function App() {
           </div>
         </div>
         <nav>
-          <NavLink to="/" end>Dashboard</NavLink>
-          <NavLink to="/map">Map</NavLink>
-          <NavLink to="/logs">Logs</NavLink>
-          <NavLink to="/appliances">Appliances</NavLink>
-          <NavLink to="/ingest">Upload Data</NavLink>
+          <NavLink to="/" end>
+            <LayoutDashboard />
+            Dashboard
+          </NavLink>
+          <NavLink to="/map">
+            <MapIcon />
+            Map
+          </NavLink>
+          <NavLink to="/logs">
+            <ScrollText />
+            Logs
+          </NavLink>
+          <NavLink to="/appliances">
+            <Cpu />
+            Appliances
+          </NavLink>
+          <NavLink to="/ingest">
+            <UploadCloud />
+            Upload Data
+          </NavLink>
         </nav>
       </aside>
 

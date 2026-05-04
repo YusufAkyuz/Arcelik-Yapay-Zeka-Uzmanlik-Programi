@@ -4,6 +4,7 @@ import { getLogs } from "../api/client";
 import { LogTable } from "../ui/LogTable";
 import type { ApplianceLog, LogFilters } from "../types";
 import { formatDateTime } from "../ui/format";
+import { Search, ChevronLeft, ChevronRight, Info } from "lucide-react";
 
 export function Logs() {
   const [filters, setFilters] = useState<LogFilters>({ limit: 25, offset: 0 });
@@ -61,7 +62,9 @@ export function Logs() {
           End
           <input name="end" type="date" />
         </label>
-        <button type="submit">Apply</button>
+        <button type="submit" style={{ display: "flex", gap: "6px", alignItems: "center", justifyContent: "center" }}>
+          <Search size={16} /> Apply
+        </button>
       </form>
 
       <div className="split">
@@ -75,45 +78,49 @@ export function Logs() {
           ) : (
             <LogTable logs={logs.data?.items ?? []} onSelect={setSelected} />
           )}
-          <div className="pager">
+          <div className="pager" style={{ gap: "16px" }}>
             <button
               type="button"
               disabled={(filters.offset ?? 0) === 0}
               onClick={() => setFilters((current) => ({ ...current, offset: Math.max((current.offset ?? 0) - 25, 0) }))}
+              style={{ background: "white", color: "var(--text-primary)", border: "1px solid var(--table-border)" }}
             >
-              Previous
+              <ChevronLeft size={16} /> Previous
             </button>
-            <span>Page {page}</span>
+            <span style={{ fontWeight: "600", color: "var(--text-secondary)", fontSize: "14px" }}>Page {page}</span>
             <button
               type="button"
               disabled={!logs.data || (filters.offset ?? 0) + (filters.limit ?? 25) >= logs.data.total}
               onClick={() => setFilters((current) => ({ ...current, offset: (current.offset ?? 0) + 25 }))}
+              style={{ background: "white", color: "var(--text-primary)", border: "1px solid var(--table-border)" }}
             >
-              Next
+              Next <ChevronRight size={16} />
             </button>
           </div>
         </section>
 
         <aside className="panel detail">
           <div className="panel-header">
-            <h2>Log detail</h2>
+            <h2 style={{ display: "flex", alignItems: "center", gap: "8px" }}><Info size={18} /> Log Detail</h2>
           </div>
           {selected ? (
             <>
               <dl className="details">
                 <dt>Appliance</dt>
-                <dd>{selected.appliance_id}</dd>
+                <dd className="mono">{selected.appliance_id}</dd>
                 <dt>Timestamp</dt>
                 <dd>{formatDateTime(selected.timestamp)}</dd>
                 <dt>State</dt>
-                <dd>{selected.conn_state ?? "unknown"}</dd>
+                <dd><span className={`badge ${selected.conn_state === 'online' ? 'online' : 'offline'}`}>{selected.conn_state ?? "unknown"}</span></dd>
                 <dt>Location</dt>
                 <dd>{selected.latitude}, {selected.longitude}</dd>
               </dl>
-              <pre>{JSON.stringify(selected.parsed_data, null, 2)}</pre>
+              <div style={{ padding: "0 24px 24px 24px" }}>
+                <pre>{JSON.stringify(selected.parsed_data, null, 2)}</pre>
+              </div>
             </>
           ) : (
-            <div className="state">Select a row to inspect parsed data.</div>
+            <div className="state" style={{ padding: "40px 24px" }}>Select a row to inspect parsed data.</div>
           )}
         </aside>
       </div>
