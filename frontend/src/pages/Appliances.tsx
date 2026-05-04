@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getAppliances } from "../api/client";
 import { formatDateTime } from "../ui/format";
+import { Link } from "react-router-dom";
 
 export function Appliances() {
   const appliances = useQuery({
@@ -39,6 +40,23 @@ export function Appliances() {
                   <td className="mono">{item.appliance_id}</td>
                   <td>{item.log_count}</td>
                   <td>{formatDateTime(item.last_seen)}</td>
+                  <td style={{ textAlign: "right" }}>
+                    <Link 
+                      to={`/device-details/${item.appliance_id}`}
+                      state={{ from: 'appliances' }}
+                      style={{ 
+                        color: "var(--primary)", 
+                        textDecoration: "none", 
+                        fontWeight: "bold",
+                        fontSize: "0.85rem",
+                        padding: "4px 8px",
+                        border: "1px solid var(--primary)",
+                        borderRadius: "4px"
+                      }}
+                    >
+                      View Details →
+                    </Link>
+                  </td>
                 </tr>
               ))}
             </tbody>

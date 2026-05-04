@@ -139,7 +139,9 @@ def get_appliances():
             .with_entities(
                 ApplianceLog.appliance_id,
                 func.count(ApplianceLog.id).label("log_count"),
-                func.max(ApplianceLog.timestamp).label("last_seen")
+                func.max(ApplianceLog.timestamp).label("last_seen"),
+                func.avg(ApplianceLog.latitude).label("latitude"),
+                func.avg(ApplianceLog.longitude).label("longitude")
             )
             .group_by(ApplianceLog.appliance_id)
             .order_by(func.max(ApplianceLog.timestamp).desc())
@@ -153,9 +155,11 @@ def get_appliances():
                 {
                     "appliance_id": appliance_id,
                     "log_count": log_count,
-                    "last_seen": last_seen.isoformat() if last_seen else None
+                    "last_seen": last_seen.isoformat() if last_seen else None,
+                    "latitude": latitude,
+                    "longitude": longitude
                 }
-                for appliance_id, log_count, last_seen in rows
+                for appliance_id, log_count, last_seen, latitude, longitude in rows
             ],
             "limit": limit,
             "offset": offset,
