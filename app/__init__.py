@@ -12,6 +12,10 @@ def create_app():
     # SQLAlchemy eklentisini bağla
     db.init_app(app)
 
+    # React uygulaması ayrı origin'den çalışacağı için API cevaplarına CORS header'ı eklenir.
+    from flask_cors import CORS
+    CORS(app, resources={r"/api/*": {"origins": os.environ.get("CORS_ORIGINS", "*")}})
+
     # NOT: db.create_all() buradan kaldırıldı.
     # Lambda init aşamasında ağ bağlantısı olmadığı için timeout'a sebep oluyordu.
     # Tablolar artık handler ilk çalıştığında oluşturulacak.
@@ -22,6 +26,26 @@ def create_app():
 
     @app.route('/health')
     def health_check():
-        return {"status": "ok", "message": "Mercek Analytics API is running."}
+        from sqlalchemy import text
+        from app.extensions import get_redis_client
+
+        database_status = "ok"
+        redis_status = "ok"
+
+        try:
+            db.session.execute(text("SELECT 1"))
+        except Exception:
+            database_status = "error"
+
+        if get_redis_client() is None:
+            redis_status = "unavailable"
+
+        status = "ok" if database_status == "ok" else "degraded"
+        return {
+            "status": status,
+            "database": database_status,
+            "redis": redis_status,
+            "message": "Mercek Analytics API is running."
+        }
 
     return app

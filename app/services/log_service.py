@@ -71,7 +71,9 @@ class LogService:
 
         lines = file_content.strip().split('\n')
         saved_count = 0
+        duplicate_count = 0
         invalid_ts_count = 0
+        seen_keys = set()
 
         for line in lines:
             if not line.strip():
@@ -92,6 +94,21 @@ class LogService:
                 invalid_ts_count += 1
                 if invalid_ts_count == 1:
                     logger.warning(f"Invalid timestamp detected: {parts[3]} (Diğer hatalı olanlar da olabilir, hepsi atlanacak)")
+                continue
+
+            event_key = (appliance_id, dt)
+            if event_key in seen_keys:
+                duplicate_count += 1
+                continue
+            seen_keys.add(event_key)
+
+            # Aynı cihaz ve timestamp tekrar geldiyse S3 retry/manual tekrar yükleme DB'yi şişirmesin.
+            existing_log = ApplianceLog.query.filter_by(
+                appliance_id=appliance_id,
+                timestamp=dt
+            ).first()
+            if existing_log:
+                duplicate_count += 1
                 continue
 
             log_arr, conn_state = LogService.extract_log_data(parts[4:])
@@ -115,5 +132,7 @@ class LogService:
         db.session.commit()
         if invalid_ts_count > 0:
             logger.warning(f"Toplam {invalid_ts_count} satırda geçersiz timestamp bulundu ve atlandı.")
+        if duplicate_count > 0:
+            logger.info(f"{duplicate_count} duplicate kayıt atlandı.")
         logger.info(f"{saved_count} kayıt başarıyla veritabanına işlendi.")
         return saved_count
