@@ -10,6 +10,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Uygulama kodlarını ve konfigürasyon dosyalarını kopyala
 COPY app/ ${LAMBDA_TASK_ROOT}/app/
 COPY config/ ${LAMBDA_TASK_ROOT}/config/
+COPY app.py ${LAMBDA_TASK_ROOT}
 COPY lambda_handler.py ${LAMBDA_TASK_ROOT}
 
 # Lambda'nın tetikleneceği giriş noktasını (Handler) belirle

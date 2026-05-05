@@ -1,3 +1,5 @@
 AWS_Kurulum_Rehberi.md
 .env
 venv/
+__pycache__/
+*.pyc
