@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: mercek_password
       POSTGRES_DB: mercek_db
     ports:
-      - "5432:5432"
+      - "5433:5432"
 
   redis:
     image: redis:7-alpine
@@ -22,7 +22,7 @@ services:
     # AWS Lambda base imajını yerelde test edebilmek için Flask server olarak çalıştırıyoruz
     entrypoint: ["python", "-m", "flask", "run", "--host=0.0.0.0", "--port=5000"]
     ports:
-      - "5000:5000"
+      - "5001:5000"
     environment:
       - DATABASE_URL=postgresql://mercek_user:mercek_password@db:5432/mercek_db
       - REDIS_URL=redis://redis:6379/0

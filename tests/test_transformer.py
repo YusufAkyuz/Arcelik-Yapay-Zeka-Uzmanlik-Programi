@@ -1,5 +1,4 @@
-import pytest
-from scripts.transformer import process_log
+from app.core.transformer import process_log
 
 SAMPLE_CONFIG = {
     "SEND_REASON": {

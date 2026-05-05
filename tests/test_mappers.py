@@ -1,5 +1,5 @@
 import pytest
-from scripts.mappers import get_bitwise_enum, get_enum, calc_voltage, get_as_min
+from app.core.mappers import get_bitwise_enum, get_enum, calc_voltage, get_as_min
 
 def test_get_bitwise_enum():
     # Normal Case
