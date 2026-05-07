@@ -4,6 +4,9 @@ from app.models.log_record import ApplianceLog
 from app.extensions import db
 from sqlalchemy import func, cast, Date
 from datetime import datetime, timedelta
+import boto3
+import os
+import time
 
 api_bp = Blueprint('api', __name__)
 
@@ -77,15 +80,18 @@ def get_dashboard_summary():
         latest_log = ApplianceLog.query.order_by(ApplianceLog.timestamp.desc()).first()
         latest_log_timestamp = latest_log.timestamp.isoformat() if latest_log and latest_log.timestamp else None
         
-        # Logs by day (last 14 days)
-        fourteen_days_ago = datetime.utcnow() - timedelta(days=14)
-        logs_by_day_query = db.session.query(
-            cast(ApplianceLog.timestamp, Date).label('date'),
-            func.count().label('count')
-        ).filter(ApplianceLog.timestamp >= fourteen_days_ago)\
-         .group_by('date').order_by('date').all()
-         
-        logs_by_day = [{"date": str(row.date), "count": row.count} for row in logs_by_day_query]
+        # Logs by day (last 14 days relative to the latest log to ensure graph is never empty for old data)
+        if latest_log and latest_log.timestamp:
+            fourteen_days_ago = latest_log.timestamp - timedelta(days=14)
+            logs_by_day_query = db.session.query(
+                cast(ApplianceLog.timestamp, Date).label('date'),
+                func.count().label('count')
+            ).filter(ApplianceLog.timestamp >= fourteen_days_ago)\
+             .group_by('date').order_by('date').all()
+             
+            logs_by_day = [{"date": str(row.date), "count": row.count} for row in logs_by_day_query]
+        else:
+            logs_by_day = []
         
         return jsonify({
             "total_logs": total_logs,
@@ -109,7 +115,9 @@ def get_appliances():
         appliances = db.session.query(
             ApplianceLog.appliance_id,
             func.count().label('log_count'),
-            func.max(ApplianceLog.timestamp).label('last_seen')
+            func.max(ApplianceLog.timestamp).label('last_seen'),
+            func.max(ApplianceLog.latitude).label('latitude'),
+            func.max(ApplianceLog.longitude).label('longitude')
         ).group_by(ApplianceLog.appliance_id)\
          .order_by(func.max(ApplianceLog.timestamp).desc())\
          .offset(offset).limit(limit).all()
@@ -117,7 +125,9 @@ def get_appliances():
         items = [{
             "appliance_id": a.appliance_id,
             "log_count": a.log_count,
-            "last_seen": a.last_seen.isoformat() if a.last_seen else None
+            "last_seen": a.last_seen.isoformat() if a.last_seen else None,
+            "latitude": a.latitude,
+            "longitude": a.longitude
         } for a in appliances]
         
         return jsonify({
@@ -126,5 +136,34 @@ def get_appliances():
             "limit": limit,
             "offset": offset
         }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@api_bp.route('/ingest', methods=['POST'])
+def ingest_logs():
+    try:
+        data = request.get_json()
+        if not data or 'lines' not in data:
+            return jsonify({"error": "No lines provided"}), 400
+        
+        lines = data['lines']
+        
+        s3_client = boto3.client(
+            's3',
+            aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
+            aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY'),
+            region_name=os.environ.get('AWS_DEFAULT_REGION', 'eu-north-1')
+        )
+        bucket = os.environ.get('S3_BUCKET_NAME', 'local-bucket')
+        
+        success_count = 0
+        for i, line in enumerate(lines):
+            timestamp = int(time.time())
+            object_name = f"logs/raw_log_{timestamp}_{i + 1}.txt"
+            
+            s3_client.put_object(Bucket=bucket, Key=object_name, Body=line.encode('utf-8'))
+            success_count += 1
+            
+        return jsonify({"records_saved": success_count, "message": "Successfully uploaded to S3"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500

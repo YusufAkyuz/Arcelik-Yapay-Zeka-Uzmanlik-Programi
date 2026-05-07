@@ -1,14 +1,19 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getDashboardSummary, getLogs } from "../api/client";
 import { LogTable } from "../ui/LogTable";
 import { formatDateTime } from "../ui/format";
 
 export function Dashboard() {
+  const [page, setPage] = useState(0);
+  const limit = 10;
+
   const summary = useQuery({ queryKey: ["dashboard-summary"], queryFn: getDashboardSummary });
   const recentLogs = useQuery({
-    queryKey: ["recent-logs"],
-    queryFn: () => getLogs({ limit: 12 })
+    queryKey: ["recent-logs", page],
+    queryFn: () => getLogs({ limit, offset: page * limit })
   });
 
   if (summary.isLoading) {
@@ -70,7 +75,50 @@ export function Dashboard() {
       <section className="panel">
         <div className="panel-header">
           <h2>Recent logs</h2>
-          <span>{recentLogs.data?.total ?? 0} total</span>
+          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+            <span style={{ fontSize: "14px", color: "var(--text-secondary)" }}>{recentLogs.data?.total ?? 0} total</span>
+            <div style={{ display: "flex", gap: "6px" }}>
+              <button 
+                onClick={() => setPage(p => Math.max(0, p - 1))} 
+                disabled={page === 0}
+                style={{ 
+                  display: "flex", alignItems: "center", gap: "2px",
+                  padding: "6px 12px", 
+                  background: page === 0 ? "rgba(241, 245, 249, 0.5)" : "white", 
+                  color: page === 0 ? "var(--text-secondary)" : "var(--primary-accent)",
+                  border: "1px solid var(--table-border)", 
+                  borderRadius: "8px", 
+                  cursor: page === 0 ? "not-allowed" : "pointer", 
+                  opacity: page === 0 ? 0.7 : 1,
+                  fontWeight: 600,
+                  fontSize: "13px",
+                  transition: "all 0.2s ease"
+                }}
+              >
+                <ChevronLeft size={16} /> Prev
+              </button>
+              <button 
+                onClick={() => setPage(p => p + 1)} 
+                disabled={!recentLogs.data || (page + 1) * limit >= recentLogs.data.total}
+                style={{ 
+                  display: "flex", alignItems: "center", gap: "2px",
+                  padding: "6px 12px", 
+                  background: (!recentLogs.data || (page + 1) * limit >= recentLogs.data.total) ? "rgba(241, 245, 249, 0.5)" : "var(--primary-accent)", 
+                  color: (!recentLogs.data || (page + 1) * limit >= recentLogs.data.total) ? "var(--text-secondary)" : "white",
+                  border: (!recentLogs.data || (page + 1) * limit >= recentLogs.data.total) ? "1px solid var(--table-border)" : "1px solid var(--primary-accent)", 
+                  borderRadius: "8px", 
+                  cursor: (!recentLogs.data || (page + 1) * limit >= recentLogs.data.total) ? "not-allowed" : "pointer", 
+                  opacity: (!recentLogs.data || (page + 1) * limit >= recentLogs.data.total) ? 0.7 : 1,
+                  fontWeight: 600,
+                  fontSize: "13px",
+                  transition: "all 0.2s ease",
+                  boxShadow: (!recentLogs.data || (page + 1) * limit >= recentLogs.data.total) ? "none" : "0 2px 4px rgba(79, 70, 229, 0.2)"
+                }}
+              >
+                Next <ChevronRight size={16} />
+              </button>
+            </div>
+          </div>
         </div>
         <LogTable logs={recentLogs.data?.items ?? []} compact />
       </section>
