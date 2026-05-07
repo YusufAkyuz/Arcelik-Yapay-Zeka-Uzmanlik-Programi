@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { UploadCloud, FileText, CheckCircle, AlertCircle } from "lucide-react";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 export function Ingest() {
   const [file, setFile] = useState<File | null>(null);
@@ -40,33 +39,19 @@ export function Ingest() {
       const text = await file.text();
       const lines = text.split('\n').filter(line => line.trim() !== "");
       
-      const s3Client = new S3Client({
-        region: import.meta.env.VITE_AWS_REGION || "eu-north-1",
-        credentials: {
-          accessKeyId: import.meta.env.VITE_AWS_ACCESS_KEY_ID || "",
-          secretAccessKey: import.meta.env.VITE_AWS_SECRET_ACCESS_KEY || "",
-        }
+      const response = await fetch("http://localhost:5001/api/ingest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lines })
       });
-      
-      const bucket = import.meta.env.VITE_S3_BUCKET_NAME || "local-bucket";
-      
-      let successCount = 0;
-      
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        const timestamp = Math.floor(Date.now() / 1000);
-        const objectName = `logs/raw_log_${timestamp}_${i + 1}.txt`;
-        
-        await s3Client.send(new PutObjectCommand({
-          Bucket: bucket,
-          Key: objectName,
-          Body: line
-        }));
-        
-        successCount++;
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to upload to backend.");
       }
-      
-      setResult({ records_saved: successCount, message: "Satırlar başarıyla S3'e yüklendi!" });
+
+      const data = await response.json();
+      setResult({ records_saved: data.records_saved, message: "Satırlar başarıyla S3'e yüklendi!" });
     } catch (err: any) {
       console.error(err);
       setError(err.message || "Failed to upload file to S3.");

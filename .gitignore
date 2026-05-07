@@ -3,3 +3,4 @@ AWS_Kurulum_Rehberi.md
 venv/
 __pycache__/
 *.pyc
+data/

@@ -4,6 +4,9 @@ from app.models.log_record import ApplianceLog
 from app.extensions import db
 from sqlalchemy import func, cast, Date
 from datetime import datetime, timedelta
+import boto3
+import os
+import time
 
 api_bp = Blueprint('api', __name__)
 
@@ -133,5 +136,34 @@ def get_appliances():
             "limit": limit,
             "offset": offset
         }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@api_bp.route('/ingest', methods=['POST'])
+def ingest_logs():
+    try:
+        data = request.get_json()
+        if not data or 'lines' not in data:
+            return jsonify({"error": "No lines provided"}), 400
+        
+        lines = data['lines']
+        
+        s3_client = boto3.client(
+            's3',
+            aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID'),
+            aws_secret_access_key=os.environ.get('AWS_SECRET_ACCESS_KEY'),
+            region_name=os.environ.get('AWS_DEFAULT_REGION', 'eu-north-1')
+        )
+        bucket = os.environ.get('S3_BUCKET_NAME', 'local-bucket')
+        
+        success_count = 0
+        for i, line in enumerate(lines):
+            timestamp = int(time.time())
+            object_name = f"logs/raw_log_{timestamp}_{i + 1}.txt"
+            
+            s3_client.put_object(Bucket=bucket, Key=object_name, Body=line.encode('utf-8'))
+            success_count += 1
+            
+        return jsonify({"records_saved": success_count, "message": "Successfully uploaded to S3"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
