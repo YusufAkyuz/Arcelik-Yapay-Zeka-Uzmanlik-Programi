@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getDashboardSummary, getLogs } from "../api/client";
 import { LogTable } from "../ui/LogTable";
 import { formatDateTime } from "../ui/format";
@@ -80,16 +81,41 @@ export function Dashboard() {
               <button 
                 onClick={() => setPage(p => Math.max(0, p - 1))} 
                 disabled={page === 0}
-                style={{ padding: "4px 10px", background: "white", border: "1px solid var(--table-border)", borderRadius: "6px", cursor: page === 0 ? "not-allowed" : "pointer", opacity: page === 0 ? 0.5 : 1 }}
+                style={{ 
+                  display: "flex", alignItems: "center", gap: "2px",
+                  padding: "6px 12px", 
+                  background: page === 0 ? "rgba(241, 245, 249, 0.5)" : "white", 
+                  color: page === 0 ? "var(--text-secondary)" : "var(--primary-accent)",
+                  border: "1px solid var(--table-border)", 
+                  borderRadius: "8px", 
+                  cursor: page === 0 ? "not-allowed" : "pointer", 
+                  opacity: page === 0 ? 0.7 : 1,
+                  fontWeight: 600,
+                  fontSize: "13px",
+                  transition: "all 0.2s ease"
+                }}
               >
-                Prev
+                <ChevronLeft size={16} /> Prev
               </button>
               <button 
                 onClick={() => setPage(p => p + 1)} 
                 disabled={!recentLogs.data || (page + 1) * limit >= recentLogs.data.total}
-                style={{ padding: "4px 10px", background: "white", border: "1px solid var(--table-border)", borderRadius: "6px", cursor: (!recentLogs.data || (page + 1) * limit >= recentLogs.data.total) ? "not-allowed" : "pointer", opacity: (!recentLogs.data || (page + 1) * limit >= recentLogs.data.total) ? 0.5 : 1 }}
+                style={{ 
+                  display: "flex", alignItems: "center", gap: "2px",
+                  padding: "6px 12px", 
+                  background: (!recentLogs.data || (page + 1) * limit >= recentLogs.data.total) ? "rgba(241, 245, 249, 0.5)" : "var(--primary-accent)", 
+                  color: (!recentLogs.data || (page + 1) * limit >= recentLogs.data.total) ? "var(--text-secondary)" : "white",
+                  border: (!recentLogs.data || (page + 1) * limit >= recentLogs.data.total) ? "1px solid var(--table-border)" : "1px solid var(--primary-accent)", 
+                  borderRadius: "8px", 
+                  cursor: (!recentLogs.data || (page + 1) * limit >= recentLogs.data.total) ? "not-allowed" : "pointer", 
+                  opacity: (!recentLogs.data || (page + 1) * limit >= recentLogs.data.total) ? 0.7 : 1,
+                  fontWeight: 600,
+                  fontSize: "13px",
+                  transition: "all 0.2s ease",
+                  boxShadow: (!recentLogs.data || (page + 1) * limit >= recentLogs.data.total) ? "none" : "0 2px 4px rgba(79, 70, 229, 0.2)"
+                }}
               >
-                Next
+                Next <ChevronRight size={16} />
               </button>
             </div>
           </div>
