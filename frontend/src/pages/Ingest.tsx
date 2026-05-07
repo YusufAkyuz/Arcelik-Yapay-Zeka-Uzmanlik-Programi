@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { UploadCloud, FileText, CheckCircle, AlertCircle } from "lucide-react";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 export function Ingest() {
   const [file, setFile] = useState<File | null>(null);
