@@ -1,7 +1,7 @@
 import json
 import re
 from datetime import datetime, timezone
-from app.extensions import db, get_redis_client
+from app.extensions import db
 from app.models.log_record import ApplianceLog
 from app.core.config_loader import load_config
 from app.core.transformer import process_log
@@ -16,29 +16,9 @@ class LogService:
     @staticmethod
     def get_config():
         """
-        Config dosyasını önce Redis'ten okumayı dener, yoksa diskten okur ve Redis'e yazar.
+        Config dosyasını diskten okur.
         """
-        redis_client = get_redis_client()
-        if redis_client:
-            try:
-                cached_config = redis_client.get(CONFIG_REDIS_KEY)
-                if cached_config:
-                    return json.loads(cached_config)
-            except Exception as e:
-                logger.warning(f"Redis okuma hatası: {e}")
-
-        # Redis'te yoksa diskten al
-        config = load_config(DEFAULT_CONFIG_PATH)
-        
-        redis_client = get_redis_client()
-        if config and redis_client:
-            try:
-                # 24 saat önbellekte tut
-                redis_client.setex(CONFIG_REDIS_KEY, 86400, json.dumps(config))
-            except Exception as e:
-                logger.warning(f"Redis yazma hatası: {e}")
-                
-        return config
+        return load_config(DEFAULT_CONFIG_PATH)
 
     @staticmethod
     def extract_log_data(raw_segments):
@@ -71,9 +51,7 @@ class LogService:
 
         lines = file_content.strip().split('\n')
         saved_count = 0
-        duplicate_count = 0
         invalid_ts_count = 0
-        seen_keys = set()
 
         for line in lines:
             if not line.strip():
@@ -94,21 +72,6 @@ class LogService:
                 invalid_ts_count += 1
                 if invalid_ts_count == 1:
                     logger.warning(f"Invalid timestamp detected: {parts[3]} (Diğer hatalı olanlar da olabilir, hepsi atlanacak)")
-                continue
-
-            event_key = (appliance_id, dt)
-            if event_key in seen_keys:
-                duplicate_count += 1
-                continue
-            seen_keys.add(event_key)
-
-            # Aynı cihaz ve timestamp tekrar geldiyse S3 retry/manual tekrar yükleme DB'yi şişirmesin.
-            existing_log = ApplianceLog.query.filter_by(
-                appliance_id=appliance_id,
-                timestamp=dt
-            ).first()
-            if existing_log:
-                duplicate_count += 1
                 continue
 
             log_arr, conn_state = LogService.extract_log_data(parts[4:])
@@ -132,7 +95,5 @@ class LogService:
         db.session.commit()
         if invalid_ts_count > 0:
             logger.warning(f"Toplam {invalid_ts_count} satırda geçersiz timestamp bulundu ve atlandı.")
-        if duplicate_count > 0:
-            logger.info(f"{duplicate_count} duplicate kayıt atlandı.")
         logger.info(f"{saved_count} kayıt başarıyla veritabanına işlendi.")
         return saved_count

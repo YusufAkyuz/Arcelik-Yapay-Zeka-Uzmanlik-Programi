@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { UploadCloud, FileText, CheckCircle, AlertCircle } from "lucide-react";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 export function Ingest() {
   const [file, setFile] = useState<File | null>(null);
@@ -23,26 +24,42 @@ export function Ingest() {
 
     setLoading(true);
     setError(null);
+    setResult(null);
 
     try {
       const text = await file.text();
-      const response = await fetch("http://localhost:5001/api/process-s3-file", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ file_content: text }),
-      });
-
-      const data = await response.json();
+      const lines = text.split('\n').filter(line => line.trim() !== "");
       
-      if (response.ok) {
-        setResult(data);
-      } else {
-        setError(data.error || "An error occurred during processing.");
+      const s3Client = new S3Client({
+        region: import.meta.env.VITE_AWS_REGION || "eu-north-1",
+        credentials: {
+          accessKeyId: import.meta.env.VITE_AWS_ACCESS_KEY_ID || "",
+          secretAccessKey: import.meta.env.VITE_AWS_SECRET_ACCESS_KEY || "",
+        }
+      });
+      
+      const bucket = import.meta.env.VITE_S3_BUCKET_NAME || "local-bucket";
+      
+      let successCount = 0;
+      
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const timestamp = Math.floor(Date.now() / 1000);
+        const objectName = `logs/raw_log_${timestamp}_${i + 1}.txt`;
+        
+        await s3Client.send(new PutObjectCommand({
+          Bucket: bucket,
+          Key: objectName,
+          Body: line
+        }));
+        
+        successCount++;
       }
+      
+      setResult({ records_saved: successCount, message: "Satırlar başarıyla S3'e yüklendi!" });
     } catch (err: any) {
-      setError(err.message || "Failed to upload file.");
+      console.error(err);
+      setError(err.message || "Failed to upload file to S3.");
     } finally {
       setLoading(false);
     }
@@ -125,7 +142,7 @@ export function Ingest() {
 
         {result && (
           <div className="state" style={{ marginTop: "24px", color: "var(--success-text)", display: "flex", alignItems: "center", gap: "10px", justifyContent: "center" }}>
-            <CheckCircle size={20} /> <strong>Success!</strong> {result.records_saved} records saved.
+            <CheckCircle size={20} /> <strong>Success!</strong> {result.records_saved} satır S3'e başarıyla yüklendi.
           </div>
         )}
       </section>

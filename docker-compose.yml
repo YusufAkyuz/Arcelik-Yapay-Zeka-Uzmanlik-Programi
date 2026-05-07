@@ -1,33 +1,30 @@
 version: '3.8'
 
 services:
-  db:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_USER: mercek_user
-      POSTGRES_PASSWORD: mercek_password
-      POSTGRES_DB: mercek_db
-    ports:
-      - "5433:5432"
-
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-
-  api:
-    build: 
+  backend:
+    build:
       context: .
-      dockerfile: Dockerfile
-    # AWS Lambda base imajını yerelde test edebilmek için Flask server olarak çalıştırıyoruz
-    entrypoint: ["python", "-m", "flask", "run", "--host=0.0.0.0", "--port=5000"]
+      dockerfile: Dockerfile.api
     ports:
       - "5001:5000"
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - /app/venv # Lokaldeki venv klasörünü izole et
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    env_file:
+      - ./frontend/.env
     environment:
-      - DATABASE_URL=postgresql://mercek_user:mercek_password@db:5432/mercek_db
-      - REDIS_URL=redis://redis:6379/0
-      - FLASK_APP=app.py
-      - FLASK_DEBUG=1
+      - VITE_API_BASE_URL=http://localhost:5001
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules # Lokaldeki node_modules'ü izole et
     depends_on:
-      - db
-      - redis
+      - backend
