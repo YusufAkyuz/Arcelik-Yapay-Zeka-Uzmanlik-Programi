@@ -3,9 +3,6 @@ from datetime import datetime
 
 class ApplianceLog(db.Model):
     __tablename__ = 'appliance_logs'
-    __table_args__ = (
-        db.UniqueConstraint('appliance_id', 'timestamp', name='uq_appliance_log_event'),
-    )
 
     id = db.Column(db.Integer, primary_key=True)
     appliance_id = db.Column(db.String(100), index=True, nullable=False)
