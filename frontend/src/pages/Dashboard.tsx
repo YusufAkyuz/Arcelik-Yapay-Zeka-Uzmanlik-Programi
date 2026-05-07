@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { getDashboardSummary, getLogs } from "../api/client";
@@ -5,10 +6,13 @@ import { LogTable } from "../ui/LogTable";
 import { formatDateTime } from "../ui/format";
 
 export function Dashboard() {
+  const [page, setPage] = useState(0);
+  const limit = 10;
+
   const summary = useQuery({ queryKey: ["dashboard-summary"], queryFn: getDashboardSummary });
   const recentLogs = useQuery({
-    queryKey: ["recent-logs"],
-    queryFn: () => getLogs({ limit: 12 })
+    queryKey: ["recent-logs", page],
+    queryFn: () => getLogs({ limit, offset: page * limit })
   });
 
   if (summary.isLoading) {
@@ -70,7 +74,25 @@ export function Dashboard() {
       <section className="panel">
         <div className="panel-header">
           <h2>Recent logs</h2>
-          <span>{recentLogs.data?.total ?? 0} total</span>
+          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+            <span style={{ fontSize: "14px", color: "var(--text-secondary)" }}>{recentLogs.data?.total ?? 0} total</span>
+            <div style={{ display: "flex", gap: "6px" }}>
+              <button 
+                onClick={() => setPage(p => Math.max(0, p - 1))} 
+                disabled={page === 0}
+                style={{ padding: "4px 10px", background: "white", border: "1px solid var(--table-border)", borderRadius: "6px", cursor: page === 0 ? "not-allowed" : "pointer", opacity: page === 0 ? 0.5 : 1 }}
+              >
+                Prev
+              </button>
+              <button 
+                onClick={() => setPage(p => p + 1)} 
+                disabled={!recentLogs.data || (page + 1) * limit >= recentLogs.data.total}
+                style={{ padding: "4px 10px", background: "white", border: "1px solid var(--table-border)", borderRadius: "6px", cursor: (!recentLogs.data || (page + 1) * limit >= recentLogs.data.total) ? "not-allowed" : "pointer", opacity: (!recentLogs.data || (page + 1) * limit >= recentLogs.data.total) ? 0.5 : 1 }}
+              >
+                Next
+              </button>
+            </div>
+          </div>
         </div>
         <LogTable logs={recentLogs.data?.items ?? []} compact />
       </section>
