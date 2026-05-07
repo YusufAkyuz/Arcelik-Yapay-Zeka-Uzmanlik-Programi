@@ -7,7 +7,7 @@ import { formatDateTime } from "../ui/format";
 import { Search, ChevronLeft, ChevronRight, Info } from "lucide-react";
 
 export function Logs() {
-  const [filters, setFilters] = useState<LogFilters>({ limit: 25, offset: 0 });
+  const [filters, setFilters] = useState<LogFilters>({ limit: 10, offset: 0 });
   const [selected, setSelected] = useState<ApplianceLog | null>(null);
 
   const logs = useQuery({
@@ -15,7 +15,7 @@ export function Logs() {
     queryFn: () => getLogs(filters)
   });
 
-  const page = useMemo(() => Math.floor((filters.offset ?? 0) / (filters.limit ?? 25)) + 1, [filters]);
+  const page = useMemo(() => Math.floor((filters.offset ?? 0) / (filters.limit ?? 10)) + 1, [filters]);
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -26,7 +26,7 @@ export function Logs() {
       conn_state: String(form.get("conn_state") || ""),
       start: String(form.get("start") || ""),
       end: String(form.get("end") || ""),
-      limit: 25,
+      limit: 10,
       offset: 0
     });
     setSelected(null);
@@ -78,23 +78,48 @@ export function Logs() {
           ) : (
             <LogTable logs={logs.data?.items ?? []} onSelect={setSelected} />
           )}
-          <div className="pager" style={{ gap: "16px" }}>
+          <div className="pager" style={{ gap: "12px", display: "flex", alignItems: "center", justifyContent: "center", padding: "16px 24px", borderTop: "1px solid var(--table-border)" }}>
             <button
               type="button"
               disabled={(filters.offset ?? 0) === 0}
-              onClick={() => setFilters((current) => ({ ...current, offset: Math.max((current.offset ?? 0) - 25, 0) }))}
-              style={{ background: "white", color: "var(--text-primary)", border: "1px solid var(--table-border)" }}
+              onClick={() => setFilters((current) => ({ ...current, offset: Math.max((current.offset ?? 0) - 10, 0) }))}
+              style={{ 
+                display: "flex", alignItems: "center", gap: "2px",
+                padding: "8px 16px", 
+                background: (filters.offset ?? 0) === 0 ? "rgba(241, 245, 249, 0.5)" : "white", 
+                color: (filters.offset ?? 0) === 0 ? "var(--text-secondary)" : "var(--primary-accent)",
+                border: "1px solid var(--table-border)", 
+                borderRadius: "8px", 
+                cursor: (filters.offset ?? 0) === 0 ? "not-allowed" : "pointer", 
+                opacity: (filters.offset ?? 0) === 0 ? 0.7 : 1,
+                fontWeight: 600,
+                fontSize: "14px",
+                transition: "all 0.2s ease"
+              }}
             >
-              <ChevronLeft size={16} /> Previous
+              <ChevronLeft size={18} /> Previous
             </button>
-            <span style={{ fontWeight: "600", color: "var(--text-secondary)", fontSize: "14px" }}>Page {page}</span>
+            <span style={{ fontWeight: "600", color: "var(--text-primary)", fontSize: "14px", background: "rgba(241, 245, 249, 0.7)", padding: "6px 12px", borderRadius: "6px" }}>Page {page}</span>
             <button
               type="button"
-              disabled={!logs.data || (filters.offset ?? 0) + (filters.limit ?? 25) >= logs.data.total}
-              onClick={() => setFilters((current) => ({ ...current, offset: (current.offset ?? 0) + 25 }))}
-              style={{ background: "white", color: "var(--text-primary)", border: "1px solid var(--table-border)" }}
+              disabled={!logs.data || (filters.offset ?? 0) + (filters.limit ?? 10) >= logs.data.total}
+              onClick={() => setFilters((current) => ({ ...current, offset: (current.offset ?? 0) + 10 }))}
+              style={{ 
+                display: "flex", alignItems: "center", gap: "2px",
+                padding: "8px 16px", 
+                background: (!logs.data || (filters.offset ?? 0) + (filters.limit ?? 10) >= logs.data.total) ? "rgba(241, 245, 249, 0.5)" : "var(--primary-accent)", 
+                color: (!logs.data || (filters.offset ?? 0) + (filters.limit ?? 10) >= logs.data.total) ? "var(--text-secondary)" : "white",
+                border: (!logs.data || (filters.offset ?? 0) + (filters.limit ?? 10) >= logs.data.total) ? "1px solid var(--table-border)" : "1px solid var(--primary-accent)", 
+                borderRadius: "8px", 
+                cursor: (!logs.data || (filters.offset ?? 0) + (filters.limit ?? 10) >= logs.data.total) ? "not-allowed" : "pointer", 
+                opacity: (!logs.data || (filters.offset ?? 0) + (filters.limit ?? 10) >= logs.data.total) ? 0.7 : 1,
+                fontWeight: 600,
+                fontSize: "14px",
+                transition: "all 0.2s ease",
+                boxShadow: (!logs.data || (filters.offset ?? 0) + (filters.limit ?? 10) >= logs.data.total) ? "none" : "0 2px 4px rgba(79, 70, 229, 0.2)"
+              }}
             >
-              Next <ChevronRight size={16} />
+              Next <ChevronRight size={18} />
             </button>
           </div>
         </section>
