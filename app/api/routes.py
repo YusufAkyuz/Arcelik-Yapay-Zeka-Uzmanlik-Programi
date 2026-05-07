@@ -139,6 +139,43 @@ def get_appliances():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@api_bp.route('/appliances/<appliance_id>', methods=['GET'])
+def get_appliance_detail(appliance_id):
+    try:
+        log_count = ApplianceLog.query.filter_by(appliance_id=appliance_id).count()
+        if log_count == 0:
+            return jsonify({"error": "Device not found"}), 404
+            
+        latest_log = ApplianceLog.query.filter_by(appliance_id=appliance_id)\
+                        .order_by(ApplianceLog.timestamp.desc()).first()
+                        
+        return jsonify({
+            "appliance_id": appliance_id,
+            "log_count": log_count,
+            "latest_log": latest_log.to_dict() if latest_log else None
+        }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@api_bp.route('/appliances/<appliance_id>/logs', methods=['GET'])
+def get_appliance_logs(appliance_id):
+    try:
+        limit = request.args.get('limit', 20, type=int)
+        offset = request.args.get('offset', 0, type=int)
+        
+        query = ApplianceLog.query.filter_by(appliance_id=appliance_id)
+        total = query.count()
+        logs = query.order_by(ApplianceLog.timestamp.desc()).offset(offset).limit(limit).all()
+        
+        return jsonify({
+            "items": [log.to_dict() for log in logs],
+            "total": total,
+            "limit": limit,
+            "offset": offset
+        }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @api_bp.route('/ingest', methods=['POST'])
 def ingest_logs():
     try:
