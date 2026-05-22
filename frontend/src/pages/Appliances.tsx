@@ -1,14 +1,19 @@
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getAppliances } from "../api/client";
 import { formatDateTime } from "../ui/format";
 import { Link } from "react-router-dom";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, ChevronLeft } from "lucide-react";
 
 export function Appliances() {
+  const [filters, setFilters] = useState({ limit: 10, offset: 0 });
+
   const appliances = useQuery({
-    queryKey: ["appliances"],
-    queryFn: () => getAppliances()
+    queryKey: ["appliances", filters],
+    queryFn: () => getAppliances(filters.limit, filters.offset)
   });
+
+  const page = useMemo(() => Math.floor(filters.offset / filters.limit) + 1, [filters]);
 
   return (
     <section className="page">
@@ -68,6 +73,53 @@ export function Appliances() {
               ))}
             </tbody>
           </table>
+        )}
+        
+        {!appliances.isLoading && (
+          <div className="pager" style={{ gap: "12px", display: "flex", alignItems: "center", justifyContent: "center", padding: "16px 24px", borderTop: "1px solid var(--table-border)" }}>
+            <button
+              type="button"
+              disabled={filters.offset === 0}
+              onClick={() => setFilters((current) => ({ ...current, offset: Math.max(current.offset - current.limit, 0) }))}
+              style={{ 
+                display: "flex", alignItems: "center", gap: "2px",
+                padding: "8px 16px", 
+                background: filters.offset === 0 ? "rgba(241, 245, 249, 0.5)" : "white", 
+                color: filters.offset === 0 ? "var(--text-secondary)" : "var(--primary-accent)",
+                border: "1px solid var(--table-border)", 
+                borderRadius: "8px", 
+                cursor: filters.offset === 0 ? "not-allowed" : "pointer", 
+                opacity: filters.offset === 0 ? 0.7 : 1,
+                fontWeight: 600,
+                fontSize: "14px",
+                transition: "all 0.2s ease"
+              }}
+            >
+              <ChevronLeft size={18} /> Previous
+            </button>
+            <span style={{ fontWeight: "600", color: "var(--text-primary)", fontSize: "14px", background: "rgba(241, 245, 249, 0.7)", padding: "6px 12px", borderRadius: "6px" }}>Page {page}</span>
+            <button
+              type="button"
+              disabled={!appliances.data || filters.offset + filters.limit >= appliances.data.total}
+              onClick={() => setFilters((current) => ({ ...current, offset: current.offset + current.limit }))}
+              style={{ 
+                display: "flex", alignItems: "center", gap: "2px",
+                padding: "8px 16px", 
+                background: (!appliances.data || filters.offset + filters.limit >= appliances.data.total) ? "rgba(241, 245, 249, 0.5)" : "var(--primary-accent)", 
+                color: (!appliances.data || filters.offset + filters.limit >= appliances.data.total) ? "var(--text-secondary)" : "white",
+                border: (!appliances.data || filters.offset + filters.limit >= appliances.data.total) ? "1px solid var(--table-border)" : "1px solid var(--primary-accent)", 
+                borderRadius: "8px", 
+                cursor: (!appliances.data || filters.offset + filters.limit >= appliances.data.total) ? "not-allowed" : "pointer", 
+                opacity: (!appliances.data || filters.offset + filters.limit >= appliances.data.total) ? 0.7 : 1,
+                fontWeight: 600,
+                fontSize: "14px",
+                transition: "all 0.2s ease",
+                boxShadow: (!appliances.data || filters.offset + filters.limit >= appliances.data.total) ? "none" : "0 2px 4px rgba(79, 70, 229, 0.2)"
+              }}
+            >
+              Next <ChevronRight size={18} />
+            </button>
+          </div>
         )}
       </section>
     </section>
